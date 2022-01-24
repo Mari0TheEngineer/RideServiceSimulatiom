@@ -1,0 +1,54 @@
+DIRECTIONS for generating a grader for a programming assignment.
+
+Directory Structure:
+          workspace -- working directory upon logging in.
+				+----> bin     -- contains the components used by the grader
+				+----> grading -- directory in which grading occurs
+						
+The directory bin/
+		Utilities used during grading:
+		
+			CheckDocnC.csh   -- checks code documentation
+			CheckRunC.csh    -- runs program against test cases, checks results.
+			match.crun       -- pattern matching for the Checkxxxx.csh scripts.  
+			Truncate8.crun   -- detects infinite loops
+			lsd              -- lists sub-directories
+			DoAll.csh        -- repeat script for students in ROSTER
+			compileall.csh   -- compiles all source files in directory.
+			filterSources.csh -- filters lines from source file.
+			
+			
+		Generators for creating grader
+		
+			genTestCases_Codio.csh  -- generates test cases from key program.
+			    (1) Run from grading directory: ~/workspace/bin/genTestCases_Codio.csh
+				 
+			gen_GRADER_from_Template.csh -- generate grader from template
+					
+			
+		Grader Templates (when directories bin/ grading/ local to (within) workspace/)
+
+			gradeMy_xbasenamex_template_LOCALbin.cpp -- template for C++ main
+						  that invokes the student's grading script.
+				  
+						  
+			My_grader_template_LOCALbin.txt  -- student self-grader 
+			       Produces: ~/workspace/bin/gradeMy_progname.csh 
+					           ~/workspace/gradeASSIGNID_progname.crun
+								  
+				Student runs: ./gradeASSIGNID_progname.crun
+					 
+			teacher_grader_template_LOCALbin.txt -- teacher grader to support batch grading.
+			       Produces: ~/workspace/bin/gradeASSIGNID_progname.csh
+					           ~/workspace/gradeASSIGNID_progname.crun
+								  
+				Teacher, from grading/: ../grade_XXX_progname.crun studlogin
+
+								  
+		Grader Templates (when directories ~/bin/ ~/grading/ are at same level as ~/workspace
+				       NOTE: Global bin provides commands runnable from any directory.
+             		
+			My_grader_template_GLOBALbin.txt      // DO NOT USE YET.
+			teacher_grader_template_GLOBALbin.txt // DO NOT USE YET.
+
+

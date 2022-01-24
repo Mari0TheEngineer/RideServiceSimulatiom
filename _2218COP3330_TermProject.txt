@@ -1,0 +1,46 @@
+./COP 3330 Object-Oriented Programming
+
+
+Project Title: Robots 101/201
+
+Purpose:  Develop classes using inheritance.
+Bonus:    Develop application using multiple robots: your call.
+
+
+- Base class:  class_ROBOT101.h 
+               Develop implementation file class_ROBOT101.cpp
+               Test class implementation using test program test_classROBOT101.cpp
+
+- Derived class:  class_ROBOT201.h
+               Develop implementation file class_ROBOT201.cpp
+               Test class implementation using test program test_classROBOT201.cpp
+
+GIVENS:        class_ROBOT101.h, class_ROBOT201.h 
+               key-class_ROBOT101.o, key-class_ROBOT201.o 
+               key-test_classROBOT101.crun,  key-test_classROBOT201.crun
+               starter_class_ROBOT101.cpp   starter_class_ROBOT201.cpp  
+               
+
+SUBMISSIONS:  class_ROBOT101-courselogin.cpp class_ROBOT201-courselogin.cpp
+
+
+=========================
+
+Implement class_ROBOT101 and verify its correctness using the ROBOT101 test
+program. To compile:
+
+    ROBOT101: 
+       g++ test_classROBOT101.o class_ROBOT101.cpp  -o t101
+       ./t101
+
+
+Implement class_ROBOT102 and verify its correctness using the ROBOT201 test
+program. To compile:
+
+    ROBOT201: 
+       g++ test_classROBOT201.cpp key-class_ROBOT101.o class_ROBOT201.cpp  -o t201
+       ./t201
+
+
+
+

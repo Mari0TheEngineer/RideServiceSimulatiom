@@ -1,0 +1,3 @@
+#!/bin/csh
+ls -l | grep '^d' | awk '{print $9"/"}' 
+

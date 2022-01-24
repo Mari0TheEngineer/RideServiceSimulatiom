@@ -1,0 +1,334 @@
+#!/bin/csh
+# -------------------------------------------------------------------------
+# File name:  gradexASSIGNx_xbasenamex.csh
+#
+# Template:   teacher_grader_template_LOCALbin.txt
+#
+# GENERATED:  Sun Mar 15 18:57:44 EST 2020 
+#
+# Purpose:    Grade Codio programming assignment for specific student (login).
+#             
+#              ************************************************************************
+# REQUIREMENT: Teacher can grade multiple student programs. A ~/workspace/bin/ 
+#              sub-directory contains executables invoked by the grading process. 
+#              Similarly, sub-directory ~/workspace/grading is where the grading takes
+#              place.
+#              ************************************************************************
+#
+# Invocation: gradexASSIGNx_xbasenamex.csh studlogin
+#
+# Example:    gradexASSIGNx_xbasenamex.csh ejones 
+#
+# Arguments: 
+#            (1) studlogin - Unix login of student. 
+#
+# Author:    Dr. Edward L. Jones
+#
+# Date:      Fall 2010  
+# Revised:   05 Mar 2018 : Codio template.
+#            12 May 2018 : Removed login from all source files.
+#
+#            TBD: Add bonus  (expf + checkrun)
+#
+#item PTS  Objective / Rubric
+#---- ---  ----------------------------------------------------------
+#  1  xsubmitPTSx     Submitted                         (xsubmitPTSx).
+#  2  xcompilePTSx     Clean compilation                 (xcompilePTSx)
+#  3  xdocnPTSx     Quality of documentation          (xdocnPTSx)
+#  4  xexecutionPTSx     Correctness of output             (xexecutionPTSx)
+#  5  bon     BONUS -- exceptional features     (+0)
+#     ---
+#      xmaxSCOREx  POINTS
+#
+#      score = ( bon + score ) / xmaxSCOREx
+# -------------------------------------------------------------------------
+
+#-|---------------------------------------------------------------------------
+#-| Verify grading directory and grading files are there.
+#-|---------------------------------------------------------------------------
+set gradingDIR = ~/workspace/grading
+set binDIR = ~/workspace/bin
+
+if (-d $gradingDIR) then
+   set count = ( `ls  $gradingDIR/xfamilynamex:*f?* | wc` )
+   if ($count[1] < 2) then
+      echo "ERROR-2: xbasenamex grading test cases not found. Email TEACHER. "
+      exit 2
+   endif
+else
+   echo "ERROR-1: xbasenamex grading area not established. Email TEACHER. "
+   exit 1
+endif
+
+set curyear = xcurYEARx
+@ doc = xdocnPTSx
+@ cor = xexecutionPTSx
+@ bon = 0
+set auto_docngrading = YES
+set auto_rungrading = YES
+
+#-|----------------------------------------------------------------
+#-| Teacher use: login MANDATORY.
+#-|----------------------------------------------------------------
+if ($#argv == 0) then
+   repeat 2 echo ""
+   echo "USAGE: gradexASSIGNx_xbasenamex.csh studlogin"
+   repeat 2 echo ""
+   exit 1
+endif
+
+set stud = $1
+
+#-| Family members share testcase files.
+set basename = xbasenamex
+set familyname = xfamilynamex     
+
+set inFile = ( xSOURCESx )
+set outFile = ( xSINKSx )
+
+#-| ---------------------------------------------------------------------------
+#-| Initialize data for grading report header.
+#-| ---------------------------------------------------------------------------
+set curdir = `pwd`
+set g = "xASSIGNx_xbasenamex.cpp_gradingreport-$stud.txt"
+
+#-| ---------------------------------------------------------------------------
+#-| Initialize overall score to the max value.
+#-| ---------------------------------------------------------------------------
+@ score = xmaxSCOREx
+
+#-| ---------------------------------------------------------------------------
+#-| Initialize file names for student's work.
+#-| ---------------------------------------------------------------------------
+set src = xbasenamex-$stud.cpp
+set srcFilter = xbasenamex:srcFilter
+set run = xbasenamex-$stud.crun
+
+#-| ---------------------------------------------------------------------------
+#-| Verify testcase files needed for grading exist in directory.
+#-| ---------------------------------------------------------------------------
+cp $src $gradingDIR
+cd $gradingDIR
+if (-e $src) then
+   @ first = 1
+   @ TCmissing = 0
+   foreach n ( xTESTCASESx )
+      if (-e xfamilynamex:expf$n ) then
+         if (-e xfamilynamex:tcf$n ) then
+            echo "TestCase $n found"
+         else
+            @ TCmissing++
+            echo "TestCase $n tcf FILE NOT FOUND"
+         endif
+      else
+         @ TCmissing++
+         echo "TestCase $n expf FILE NOT FOUND"
+      endif
+   end
+else
+   echo "** BAD ERROR -- SOURCE FILE $src NOT FOUND **"
+endif
+
+#-| ---------------------------------------------------------------------------
+#-| Write out header for grading report.
+#-| ---------------------------------------------------------------------------
+if (-e $g) rm $g
+echo "-----------------------------------------------------" > $g
+date >> $g
+echo "-----------------------------------------------------" >> $g
+echo "Grading Report for $stud" >> $g
+echo "Assignment: xASSIGNx" >> $g
+echo "Program:    xbasenamex.cpp" >> $g
+echo " " >> $g
+echo "MAX Score = xmaxSCOREx" >> $g
+echo "Grading Deductions/Details: " >> $g
+echo "-----------------------------------------------------" >> $g
+echo " " >> $g
+
+     # -----------------------------------------
+P1:  #-| Check: MISSING ASSIGNMENT.
+     # -----------------------------------------
+echo "-------------------------------------------------------------" >> $g
+echo "P1 - Program submission (xsubmitPTSx)"  >> $g
+echo "-------------------------------------------------------------" >> $g
+if (! -e $src) then
+   echo "     -xmaxSCOREx  -> (Deduction Rationale: Source file $src NOT FOUND)"
+   echo "     -xmaxSCOREx  -> (Deduction Rationale: Source file $src NOT FOUND)" >> $g
+   @ score = $score - xmaxSCOREx
+   goto WRITESCORE
+else
+   echo "     +xsubmitPTSx  -> (Rationale: Assignment submitted)" >> $g
+endif
+
+
+if (xcompilePTSx == 0) then
+   echo "SKIPPING COMPILATION STEP ... "
+   repeat 1 echo " " >> $g
+   echo "SKIPPING COMPILATION STEP ... " >> $g
+   repeat 1 echo " " >> $g
+   goto P3 
+endif
+
+COMPILE_SetUp:  # ================================= #
+                # ================================= #
+
+#-| ---------------------------------------------------------------------
+#-| Check that the .cpp, .h and .o files needed to compile the source 
+#-| program are in the directory where grading is being performed.
+#-|
+#-| NOTE: Files are either in the hidden grading directory (from stack),
+#-|       or have been copied from student's project into grading directory.
+#-| ---------------------------------------------------------------------
+
+set CLEANUP_list = ( )
+set includeF = ( xincludeFx  )
+@ missing = 0
+foreach inclf ( $includeF )
+  if (! -e $inclf) then
+     echo "WARNING: MISSING INCLUDE file $inclf "
+     @ missing++
+  endif
+end
+
+set compileF = ( $src xcompileFx )
+foreach compf ( $compileF )
+  if (! -e $compf ) then
+     echo "WARNING: MISSING compilation file $compf "
+     @ missing++
+  endif
+end
+
+
+if ($missing) then
+   echo "RE-RUN after placing these files in the current directory ..."
+   @ score = 0
+   goto WRITESCORE 
+endif
+
+echo "COMPILER INPUT FILES: $compileF"
+#echo -n "Hit ENTER to CONTINUE: "; set go = $<
+
+     # -----------------------------------------
+P2:  #-| Check: FAILURE TO COMPILE.
+     # -----------------------------------------
+
+echo "-------------------------------------------------------------" >> $g
+echo "P2 - Program compilation (xcompilePTSx)"  >> $g
+echo "-------------------------------------------------------------" >> $g
+
+csh $binDIR/filterSource.csh $src $srcFilter 
+set complog = complog-$stud
+if (-e $complog) rm -f $complog
+g++ $compileF >& $complog
+set nocompile = $status
+if ($nocompile) then
+   echo -n "     -xcompilePTSx -> (Deduction Rationale: DOES NOT COMPILE)" >> $g
+   echo " - see compilation log below ..." >> $g
+   echo -n "     -xcompilePTSx  -> (Deduction Rationale: DOES NOT COMPILE)"
+   echo " - see compilation log below ..." 
+
+   echo "     **************************** " >> $g
+   echo "     **************************** " >> $g
+   sed 's/^/     /' $complog >> $g 
+   echo "     **************************** " >> $g
+   echo "     **************************** " >> $g
+
+   @ score = $score - xcompilePTSx 
+
+else
+   echo "     +xcompilePTSx  -> (Rationale: Successful compilation)" >> $g
+   g++ $compileF -o $run
+endif
+if (-e $complog) rm -f $complog
+
+
+     # ---------------------------------------------
+P3:  #-| AUTO Check: DOCUMENTATION.
+     # ---------------------------------------------
+
+if (xdocnPTSx == 0) then
+   echo "SKIPPING DOCUMENTATION CHECK STEP ... "
+   repeat 1 echo " " >> $g
+   echo "SKIPPING DOCUMENTATION CHECK STEP ... " >> $g
+   repeat 1 echo " " >> $g
+   goto P4 
+endif
+
+@ doc_maxpts = xdocnPTSx
+
+echo "-------------------------------------------------------------" >> $g
+echo "P3 - Quality of documentation ($doc_maxpts)" >> $g
+echo "-------------------------------------------------------------" >> $g
+echo "P3 - Quality of documentation ($doc_maxpts)" 
+echo 
+
+csh $binDIR/CheckDocnC.csh xASSIGNx xbasenamex $stud $doc_maxpts $g
+@ docnpts = $status
+@ docded = xdocnPTSx - $docnpts
+@ score = $score - $docded
+
+#-- end P3
+
+     # -----------------------------------------------------
+P4:  #-| Check: EXECUTION output correctness and formatting.
+     # -----------------------------------------------------
+
+if (xexecutionPTSx == 0) then
+   echo "SKIPPING EXECUTION STEP ... "
+   repeat 1 echo " " >> $g
+   echo "SKIPPING EXECUTION STEP ... " >> $g
+   repeat 1 echo " " >> $g
+   goto WRITESCORE  
+endif
+     
+echo "-------------------------------------------------------------" >> $g
+echo "P4 - Execution Correctness and Layout (xexecutionPTSx)" >> $g
+echo "-------------------------------------------------------------" >> $g
+echo "P4 - Execution Correctness and Layout (xexecutionPTSx)" 
+echo 
+echo "" >> $g
+
+if (! -e $run) then
+   echo "      -xexecutionPTSx (xexecutionPTSx)  -> (Deduction Rationale - NO EXECUTABLE PROGRAM FOUND.)"
+   echo "      -xexecutionPTSx (xexecutionPTSx)  -> (Deduction Rationale - NO EXECUTABLE PROGRAM FOUND.)" >> $g
+   echo ""
+   echo "" >> $g
+   echo "       EXECUTION score = 0 / xexecutionPTSx" >> $g
+   echo "       EXECUTION score = 0 / xexecutionPTSx" 
+
+   @ score = $score - xexecutionPTSx
+   goto WRITESCORE
+endif
+
+echo "" >> $g
+
+#-| ------------------------------------------------------------------
+#-| Automated execution and scoring -- INTERACTIVE program.
+#-| ------------------------------------------------------------------
+
+csh $binDIR/CheckRunC.csh xbasenamex $stud $cor $g $inFile $outFile Codio
+@ pts = $status
+@ runded = $cor - $pts
+@ score = $score - $runded
+
+
+WRITESCORE:
+
+#-| Print final score.
+echo " " >> $g
+echo "xASSIGNx:xbasenamex.cpp $stud SCORE = $score / xmaxSCOREx  " >> $g
+echo "xASSIGNx:xbasenamex.cpp $stud SCORE = $score / xmaxSCOREx  " 
+echo " " >> $g
+echo "-----------------------------------------------------" >> $g
+
+cp $g $curdir/ 
+
+goto STOPNOW
+curl --retry 3 -s "$CODIO_AUTOGRADE_URL&grade=$score"
+STOPNOW:
+
+echo ""
+echo "Grader gradexASSIGNx_xbasenamex.csh terminating ... "
+
+exit 0
+
